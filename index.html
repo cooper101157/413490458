@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>供給面與成本衝擊：經濟傳導機制</title>
+    <!-- Chart.js CDN 用於繪製動態圖表 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-red: #ef4444;
+            --accent-green: #10b981;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            padding-bottom: 60px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+            padding: 80px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #60a5fa;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        section {
+            margin-top: 60px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            border-left: 4px solid var(--primary);
+            padding-left: 12px;
+        }
+
+        /* 傳導流程卡片 */
+        .chain-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 20px;
+            position: relative;
+        }
+
+        .chain-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .chain-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+        }
+
+        .chain-step {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            line-height: 32px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .chain-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .chain-card p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* 模擬器區塊 */
+        .simulator-container {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 850px) {
+            .simulator-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--primary);
+        }
+
+        select {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .metric-box {
+            background-color: var(--bg-dark);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .metric-box label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .metric-box span {
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 320px;
+            width: 100%;
+        }
+
+        /* 案例與報告大綱 */
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            background-color: var(--bg-card);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .tab-content {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .ppt-page {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .ppt-page:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .ppt-page h4 {
+            color: #60a5fa;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Hero 區塊 -->
+    <header>
+        <div class="container">
+            <h1>為什麼颱風過後便當突然變貴了？</h1>
+            <p>探索「供給面與成本衝擊」如何從上游原物料一路傳導至我們的錢包，並導致總體經濟的滯脹現象。</p>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <!-- 傳導流程圖區塊 -->
+        <section>
+            <h2 class="section-title">成本衝擊傳導 4 階段</h2>
+            <div class="chain-grid">
+                <div class="chain-card">
+                    <span class="chain-step">1</span>
+                    <h3>外生衝擊</h3>
+                    <p>天災、地緣政治衝突或供應鏈中斷，導致原油、農產品等原物料價格大幅飆升。</p>
+                </div>
+                <div class="chain-card">
+                    <span class="chain-step">2</span>
+                    <h3>PPI 生產成本上升</h3>
+                    <p>中游製造業與企業生產成本攀升，生產者物價指數（PPI）率先反應壓力。</p>
+                </div>
+                <div class="chain-card">
+                    <span class="chain-step">3</span>
+                    <h3>CPI 終端售價調漲</h3>
+                    <p>企業將部分或全部成本轉嫁給消費者，帶動消費者物價指數（CPI）上漲。</p>
+                </div>
+                <div class="chain-card">
+                    <span class="chain-step">4</span>
+                    <h3>滯脹與購買力下降</h3>
+                    <p>民眾實質購買力受削弱，企業縮減生產，形成高物價與經濟停滯的滯脹（Stagflation）。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 互動模擬器區塊 -->
+        <section>
+            <h2 class="section-title">供給面衝擊與轉嫁試算模擬器</h2>
+            <div class="simulator-container">
+                
+                <!-- 控制面板 -->
+                <div class="controls">
+                    <div class="control-group">
+                        <label>
+                            <span>上游原物料衝擊幅度 (%)</span>
+                            <span id="shock-val">30%</span>
+                        </label>
+                        <input type="range" id="shock-input" min="0" max="100" value="30">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="elasticity-select">商品需求價格彈性</label>
+                        <select id="elasticity-select">
+                            <option value="0.3">低彈性（如：汽油、便當、必需品）- 轉嫁率高</option>
+                            <option value="0.7" selected>中彈性（一般消費品）- 轉嫁率中等</option>
+                            <option value="1.2">高彈性（如：奢侈品、精緻甜點）- 轉嫁率低</option>
+                        </select>
+                    </div>
+
+                    <div class="metrics-grid">
+                        <div class="metric-box">
+                            <label>預估 PPI 增幅</label>
+                            <span id="ppi-val" style="color: var(--accent-red);">+24.0%</span>
+                        </div>
+                        <div class="metric-box">
+                            <label>預估 CPI (售價) 增幅</label>
+                            <span id="cpi-val" style="color: var(--accent-red);">+16.8%</span>
+                        </div>
+                        <div class="metric-box">
+                            <label>市場供給量變動</label>
+                            <span id="quantity-val" style="color: #f59e0b;">-8.4%</span>
+                        </div>
+                        <div class="metric-box">
+                            <label>實質購買力衝擊</label>
+                            <span id="power-val" style="color: var(--accent-red);">-14.4%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 供需曲線位移視覺化圖表 -->
+                <div>
+                    <h3 style="font-size: 1rem; margin-bottom: 10px; color: var(--text-muted); text-align: center;">總體供需模型 (SRAS 左移)</h3>
+                    <div class="chart-container">
+                        <canvas id="srasChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- 案例與簡報大綱區塊 -->
+        <section>
+            <h2 class="section-title">案例分析與報告大綱</h2>
+            
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="switchTab('case')">實務案例分析</button>
+                <button class="tab-btn" onclick="switchTab('ppt')">簡報 (PPT) 架構大綱</button>
+            </div>
+
+            <div id="case-tab" class="tab-content active">
+                <h3>石油危機與食品漲價的轉嫁差異</h3>
+                <br>
+                <p><strong>1. 低彈性商品案例（原油/便當）：</strong> 當國際原油價格衝擊或天災導致菜價上漲時，由於消費者對這類商品缺乏短期替代品（需求彈性小），企業能夠將大部分成本直接轉嫁給終端消費者，導致 CPI 快速上升。</p>
+                <br>
+                <p><strong>2. 高彈性商品案例（休閒娛樂/高級餐廳）：</strong> 成本上升時，若企業嘗試全面漲價，消費者會迅速選擇放棄消費或找尋替代品。因此企業往往需要自行吸收大部分成本（利潤受損），或選擇減產甚至倒閉。</p>
+            </div>
+
+            <div id="ppt-tab" class="tab-content">
+                <div class="ppt-page">
+                    <h4>Page 1: 封面與主題介紹</h4>
+                    <p>題目：從外生衝擊到我們的錢包 —— 供給面與成本衝擊的傳導機制</p>
+                </div>
+                <div class="ppt-page">
+                    <h4>Page 2: 生活中的例子</h4>
+                    <p>切入點：颱風天菜價飆漲、石油危機導致萬物齊漲等生活實例。</p>
+                </div>
+                <div class="ppt-page">
+                    <h4>Page 3: 核心傳導鏈 4 大步驟</h4>
+                    <p>圖解：外生衝擊 $\rightarrow$ PPI 上漲 $\rightarrow$ CPI 上漲 $\rightarrow$ 實質購買力下降與滯脹。</p>
+                </div>
+                <div class="ppt-page">
+                    <h4>Page 4: 經濟學理基礎 (SRAS 模型)</h4>
+                    <p>分析：短期總供給曲線（SRAS）左移，說明價格 $P \uparrow$ 與產出 $Y \downarrow$ 的滯脹現象。</p>
+                </div>
+                <div class="ppt-page">
+                    <h4>Page 5: 轉嫁關鍵 —— 需求價格彈性</h4>
+                    <p>對比分析必需品（高轉嫁率）與非必需品（低轉嫁率、企業吞吸收成本）的差異。</p>
+                </div>
+                <div class="ppt-page">
+                    <h4>Page 6: 網頁模擬與情境演算展示</h4>
+                    <p>展示模擬器數據：呈現不同衝擊幅度對物價與整體購買力的量化影響。</p>
+                </div>
+                <div class="ppt-page">
+                    <h4>Page 7: 政策因應與結論</h4>
+                    <p>說明政府因應手段：進口關稅調降、物價穩定基金釋出與低收入戶補貼。</p>
+                </div>
+            </div>
+
+        </section>
+
+    </div>
+
+    <!-- 腳本邏輯 -->
+    <script>
+        // 頁籤切換
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            if(tabName === 'case') {
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                document.getElementById('case-tab').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                document.getElementById('ppt-tab').classList.add('active');
+            }
+        }
+
+        // 初始化 Chart.js 圖表
+        const ctx = document.getElementById('srasChart').getContext('2d');
+        let srasChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['低 (Q1)', '中 (Q2)', '高 (Q3)'],
+                datasets: [
+                    {
+                        label: '總需求曲線 (AD)',
+                        data: [90, 60, 30],
+                        borderColor: '#60a5fa',
+                        borderWidth: 2,
+                        fill: false
+                    },
+                    {
+                        label: '原始總供給 (SRAS1)',
+                        data: [20, 50, 80],
+                        borderColor: '#10b981',
+                        borderWidth: 2,
+                        fill: false
+                    },
+                    {
+                        label: '衝擊後總供給 (SRAS2)',
+                        data: [45, 75, 105],
+                        borderColor: '#ef4444',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: { display: true, text: '總產出 (GDP / Y)', color: '#94a3b8' },
+                        ticks: { color: '#94a3b8' },
+                        grid: { color: '#334155' }
+                    },
+                    y: {
+                        title: { display: true, text: '物價水準 (P)', color: '#94a3b8' },
+                        ticks: { color: '#94a3b8' },
+                        grid: { color: '#334155' }
+                    }
+                },
+                plugins: {
+                    legend: { labels: { color: '#f8fafc' } }
+                }
+            }
+        });
+
+        // 模擬器計算 Logic
+        const shockInput = document.getElementById('shock-input');
+        const shockVal = document.getElementById('shock-val');
+        const elasticitySelect = document.getElementById('elasticity-select');
+        
+        const ppiVal = document.getElementById('ppi-val');
+        const cpiVal = document.getElementById('cpi-val');
+        const quantityVal = document.getElementById('quantity-val');
+        const powerVal = document.getElementById('power-val');
+
+        function updateSimulation() {
+            const shock = parseFloat(shockInput.value);
+            const elasticity = parseFloat(elasticitySelect.value);
+
+            shockVal.textContent = shock + '%';
+
+            // 數值計算公式
+            const ppi = (shock * 0.8).toFixed(1);
+            const passThroughRate = Math.max(0.2, 1 - (elasticity * 0.4));
+            const cpi = (ppi * passThroughRate).toFixed(1);
+            const quantityImpact = (-cpi * elasticity * 0.5).toFixed(1);
+            const purchasingPower = (-cpi * 0.85).toFixed(1);
+
+            ppiVal.textContent = '+' + ppi + '%';
+            cpiVal.textContent = '+' + cpi + '%';
+            quantityVal.textContent = quantityImpact + '%';
+            powerVal.textContent = purchasingPower + '%';
+
+            // 更新圖表數據 (模擬 SRAS 曲線向上/向左位移)
+            const shift = shock * 0.4;
+            srasChart.data.datasets[2].data = [20 + shift, 50 + shift, 80 + shift];
+            srasChart.update();
+        }
+
+        shockInput.addEventListener('input', updateSimulation);
+        elasticitySelect.addEventListener('change', updateSimulation);
+
+        // 初始化第一次計算
+        updateSimulation();
+    </script>
+</body>
+</html>
